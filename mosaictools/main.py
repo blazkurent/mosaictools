@@ -1,10 +1,10 @@
 ''' This module provides surrogate modelling tools using the Mode-Shape-Adapted Input Parameter Domain Cutting (MOSAIC) approach.'''
 
 import numpy as np
-from gpc_surrogate import GpcSurrogateModel
-from simparameter_set import SimParamSet
-from simparameter import SimParameter
-from distributions import UniformDistribution
+from .gpc_surrogate import GpcSurrogateModel
+from .simparameter_set import SimParamSet
+from .simparameter import SimParameter
+from .distributions import UniformDistribution
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.svm import SVC
 from scipy.stats import qmc
