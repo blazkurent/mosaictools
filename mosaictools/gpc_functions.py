@@ -1,4 +1,4 @@
-from polysys import *
+from .polysys import *
 
 def syschar_to_polysys(syschar):
     poly_dict = {'H': HermitePolynomials,
