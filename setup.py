@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='mosaictools',
-    version='0.1.5',
+    version='0.1.6',
     author='Blaž Kurent',
     author_email='blaz.kurent@fgg.uni-lj.si',
     description='Surrogate modelling of modal properties using MOSAIC method',
