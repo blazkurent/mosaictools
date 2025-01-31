@@ -1,5 +1,5 @@
 import numpy as np
-from gpc_functions import syschar_to_polysys
+from .gpc_functions import syschar_to_polysys
 
 class SimParameter():
     def __init__(self, name, dist, **kwargs):
