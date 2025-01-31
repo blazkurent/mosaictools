@@ -9,6 +9,7 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.svm import SVC
 from scipy.stats import qmc
 import copy
+from typing import Union
 
 #----------- Clustering -------------#
 
@@ -88,7 +89,7 @@ def _MAC_distance_matrix(eigenvectors : np.ndarray, method: str='inverse') -> np
         dist_matrix = 1-D**2/(A*B)
     return dist_matrix
 
-def _find_clusters(eigenvectors : np.ndarray, dist_matrix:np.ndarray | None = None, clustering_threshold: float=0.1) -> np.ndarray:
+def _find_clusters(eigenvectors : np.ndarray, dist_matrix:Union[np.ndarray,None] = None, clustering_threshold: float=0.1) -> np.ndarray:
     ''' Returns the cluster centers using hierarchical clustering.
     
         Parameters
@@ -145,7 +146,7 @@ def _get_highest_off_diagonal_macs(cluster_centers : np.ndarray) -> np.ndarray:
     highest_off_diagonal_macs = np.array(highest_off_diagonal_macs)
     return highest_off_diagonal_macs
 
-def _find_typical_eigenvectors(eigenvectors : np.ndarray, eigenfrequencies: np.ndarray, dist_matrix: np.ndarray | None = None, resolution: float=0.3, recursion_iteration: int=0, recursion_limit: int=10) -> np.ndarray:
+def _find_typical_eigenvectors(eigenvectors : np.ndarray, eigenfrequencies: np.ndarray, dist_matrix: Union[np.ndarray,None] = None, resolution: float=0.3, recursion_iteration: int=0, recursion_limit: int=10) -> np.ndarray:
     ''' Calculates the typical eigenvectors.
     
         Parameters
@@ -263,7 +264,7 @@ def _compute_dot_products(input_eigenvectors : np.ndarray, reference_eigenvector
     dot_products = dot_products.reshape(num_of_samples, num_of_modes, -1)
     return dot_products
 
-def _flip_eigenvectors(input_eigenvectors: np.ndarray, reference_eigenvectors: np.ndarray | None = None) -> np.ndarray:
+def _flip_eigenvectors(input_eigenvectors: np.ndarray, reference_eigenvectors: Union[np.ndarray,None] = None) -> np.ndarray:
     ''' Flips eigenvectors by clusters to the direction of the typical eigenvectors.
     
         Parameters
