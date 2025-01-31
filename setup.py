@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='mosaictools',
-    version='0.1.3',
+    version='0.1.4',
     author='Blaž Kurent',
     author_email='blaz.kurent@fgg.uni-lj.si',
     description='Surrogate modelling of modal properties using MOSAIC method',
@@ -13,7 +13,7 @@ setup(
     py_modules=['mosaictools'],
     install_requires=[
         'numpy',
-        'sklearn',
+        'scikit-learn',
         'scipy'
     ],
     classifiers=[
