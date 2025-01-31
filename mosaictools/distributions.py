@@ -1,4 +1,4 @@
-# from polysys import LegendrePolynomials
+# from .polysys import LegendrePolynomials
 import numpy as np
 from scipy.stats.qmc import Halton as ghalton
 
