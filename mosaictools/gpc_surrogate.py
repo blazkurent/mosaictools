@@ -1,6 +1,6 @@
 import numpy as np
-from multiindex import *
-from gpc_functions import syschar_to_polysys
+from .multiindex import *
+from .gpc_functions import syschar_to_polysys
 
 # ##########################################################################################
 #                           GPC SURROGATE MODEL
