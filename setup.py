@@ -15,7 +15,6 @@ setup(
         'numpy',
         'sklearn',
         'scipy',
-        'copy',
         'abc'
     ],
     classifiers=[
