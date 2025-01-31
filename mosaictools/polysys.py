@@ -1,5 +1,5 @@
 import numpy as np
-from distributions import UniformDistribution
+from .distributions import UniformDistribution
 from abc import ABC, abstractmethod
 
 class PolynomialSystem(ABC):
