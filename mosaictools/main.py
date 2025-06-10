@@ -376,10 +376,10 @@ class SubdomainClassifier():
         
         assert len(self.classes) != 0, 'The classifier is not trained yet.'
         if len(self.classes) == 1:
-            y_pred = np.ones((len(X), ))
+            y_pred = np.zeros((len(X), ))
         else:
             y_pred = self.model.predict(X)
-            return y_pred
+        return y_pred
 
     def predict_probability(self, X: np.ndarray) -> np.ndarray:
         ''' Compute probabilities of possible outcomes for samples in `X`.
@@ -399,7 +399,7 @@ class SubdomainClassifier():
             probabilities = np.ones((len(X), 1))
         else:
             probabilities = self.model.predict_proba(X)
-            return probabilities
+        return probabilities
 
             
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
