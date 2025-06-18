@@ -10,6 +10,8 @@ from sklearn.svm import SVC
 from scipy.stats import qmc
 import copy
 from typing import Union
+import pickle
+import os
 
 #----------- Clustering -------------#
 
@@ -638,6 +640,21 @@ class ModeModel():
         accuracy = self.classifier.score(test_params, test_labels)
         return accuracy
     
+    def get_classification_results(self, q):
+        ''' Perform classification on parameter samples `q`.
+
+            Parameters
+            ----------
+            q : ndarray of shape (n_samples, n_parameters)
+                Input parameters.
+            Returns
+            -------
+            labels : ndarray of shape (n_samples, )
+                Results of the classification.'''
+        assert len(self.eigenvector_models) != 0, 'The ModeModel is not trained yet'
+        model_idx = self.classifier.predict(q)
+        return model_idx
+
     def get_labels(self) -> list:
         ''' Return the list of class labels of the trained classifier.
             
@@ -853,6 +870,27 @@ class Mosaic():
             mode_probabilities = self.mode_models[i].predict_probability(q)
             probabilities.append(mode_probabilities)
         return probabilities
+    
+    def get_class_labels(self, q: np.ndarray):
+        ''' Perform classification on parameter samples `q`.
+
+            Parameters
+            ----------
+            q : ndarray of shape (n_samples, n_parameters)
+                Input parameters.
+            Returns
+            -------
+            labels : ndarray of shape (n_samples, n_modes)
+                Results of the classification.'''
+        assert len(self.mode_models) != 0, 'The MOSAIC model is not trained yet'
+        
+        q = self.Q.params2germ(q.T).T
+
+        labels = np.zeros((len(q), self.n_modes))
+        for i in range(self.n_modes):
+            labels[:, i] = self.mode_models[i].get_classification_results(q)
+
+        return labels
 
     def get_number_of_classes(self) -> list:
         ''' Return array of class numbers of the trained classifiers in each mode.
@@ -931,8 +969,13 @@ class Mosaic():
             mac_errors[:, i] = 1 - _calculate_diag_MAC_matrix(predicted_eigenvectors[:, i, :], real_eigenvectors[:, i, :])
         return mac_errors
     
-    # def save(self, path):
-    #     TODO
-    
-    # def load(self, path):
-    #     TODO
+def save(model: Mosaic, name: str, path: str):
+    with open(path + name + '.msic', 'wb') as handle:
+        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+def load(path: str) -> Mosaic:
+    assert os.path.isfile(path), "File does not exist"
+    assert path[-5:] == ".msic", "File extention is not correct. Select a '.msic' file"
+    with open(path, 'rb') as handle:
+        model = pickle.load(handle)
+    return model
