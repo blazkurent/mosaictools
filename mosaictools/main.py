@@ -6,6 +6,7 @@ from .simparameter_set import SimParamSet
 from .simparameter import SimParameter
 from .distributions import UniformDistribution
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.model_selection import KFold
 from sklearn.svm import SVC
 from scipy.stats import qmc
 import copy
@@ -798,6 +799,7 @@ class Mosaic():
 
         self.mode_models = {}
 
+
         _, n_modes, n_nodes = eigenvectors.shape
         self.n_modes = n_modes
         self.n_nodes = n_nodes
@@ -928,46 +930,81 @@ class Mosaic():
         parameters = self.Q.germ2params(parameters.T).T
         return parameters
     
-    def calculate_relative_frequency_errors(self, real_frequencies : np.ndarray, predicted_frequencies : np.ndarray) -> np.ndarray:
-        ''' Return array of relative frequency errors between real frequency values and predictions.
+def calculate_relative_frequency_errors(real_frequencies : np.ndarray, predicted_frequencies : np.ndarray) -> np.ndarray:
+    ''' Return array of relative frequency errors between real frequency values and predictions.
 
-            Parameters
-            ----------
-            real_frequencies : ndarray of shape (n_samples, n_modes)
-                Real frequency values.
+        Parameters
+        ----------
+        real_frequencies : ndarray of shape (n_samples, n_modes)
+            Real frequency values.
 
-            predicted_frequencies : ndarray of shape (n_samples, n_modes)
-                Predicted frequency values.
+        predicted_frequencies : ndarray of shape (n_samples, n_modes)
+            Predicted frequency values.
 
-            Returns
-            -------
-            frequency_errors : ndarray of shape (n_samples, n_modes)
-                Relative frequency errors between real and predicted frequency values.'''
+        Returns
+        -------
+        frequency_errors : ndarray of shape (n_samples, n_modes)
+            Relative frequency errors between real and predicted frequency values.'''
+    
+    assert real_frequencies.shape == predicted_frequencies.shape, 'The real and the predicted frequences should have the sem dimensions, but {} and {} was given.'.format(real_frequencies.shape, predicted_frequencies.shape)
+    frequency_errors = np.abs(real_frequencies - predicted_frequencies)/real_frequencies
+    return frequency_errors
+
+def calculate_eigenvector_MAC_errors(real_eigenvectors : np.ndarray, predicted_eigenvectors : np.ndarray) -> np.ndarray:
+    ''' Return array of 1 - MAC values between real eigenvectors and predictions.
+
+        Parameters
+        ----------
+        real_eigenvectors : ndarray of shape (n_samples, n_modes, n_nodes)
+            Real eigenvectors.
+
+        predicted_eigenvectors : ndarray of shape (n_samples, n_modes)
+            Predicted eigenvectors.
+
+        Returns
+        -------
+        mac_errors : ndarray of shape (n_samples, n_modes)
+            1 - MAC values between real and predicted eigenvectors.'''
+    
+    mac_errors = np.zeros((real_eigenvectors.shape[0], real_eigenvectors.shape[1]))
+    for i in range(real_eigenvectors.shape[1]):
+        mac_errors[:, i] = 1 - _calculate_diag_MAC_matrix(predicted_eigenvectors[:, i, :], real_eigenvectors[:, i, :])
+    return mac_errors
+
+def cross_validate(model: Mosaic, parameters: np.ndarray, frequencies: np.ndarray, eigenvectors: np.ndarray, n_folds: int = 9, shuffle: bool = False, verbose=False):
+
+    kf = KFold(n_splits=n_folds, shuffle=shuffle)
+
+    total_frequency_errors = np.array([])
+    total_mac_errors = np.array([])
+
+    if verbose:
+        print("Cross-validation started. The process may take a couple minutes")
+    
+    for i, (train_index, test_index) in enumerate(kf.split(parameters)):
+        train_parameters, train_frequencies, train_eigenvectors = parameters[train_index], frequencies[train_index], eigenvectors[train_index]
+        test_parameters, test_frequencies, test_eigenvectors = parameters[test_index], frequencies[test_index], eigenvectors[test_index]
+
+        model.fit(train_parameters, train_frequencies, train_eigenvectors, verbose=False)
+
+        predicted_frequencies, predicted_eigenvectors = model.predict(test_parameters)
+
+        frequency_errors = calculate_relative_frequency_errors(test_frequencies, predicted_frequencies)
+        mac_errors = calculate_eigenvector_MAC_errors(test_eigenvectors, predicted_eigenvectors)
+
+        if i == 0:
+            total_frequency_errors = frequency_errors
+            total_mac_errors = mac_errors
+        else:
+            total_frequency_errors = np.concatenate((total_frequency_errors, frequency_errors), axis=0)
+            total_mac_errors = np.concatenate((total_mac_errors, mac_errors), axis=0)
         
-        assert real_frequencies.shape == predicted_frequencies.shape, 'The real and the predicted frequences should have the sem dimensions, but {} and {} was given.'.format(real_frequencies.shape, predicted_frequencies.shape)
-        frequency_errors = np.abs(real_frequencies - predicted_frequencies)/real_frequencies
-        return frequency_errors
-
-    def calculate_eigenvector_MAC_errors(self, real_eigenvectors : np.ndarray, predicted_eigenvectors : np.ndarray) -> np.ndarray:
-        ''' Return array of 1 - MAC values between real eigenvectors and predictions.
-
-            Parameters
-            ----------
-            real_eigenvectors : ndarray of shape (n_samples, n_modes, n_nodes)
-                Real eigenvectors.
-
-            predicted_eigenvectors : ndarray of shape (n_samples, n_modes)
-                Predicted eigenvectors.
-
-            Returns
-            -------
-            mac_errors : ndarray of shape (n_samples, n_modes)
-                1 - MAC values between real and predicted eigenvectors.'''
-        
-        mac_errors = np.zeros((real_eigenvectors.shape[0], self.n_modes))
-        for i in range(self.n_modes):
-            mac_errors[:, i] = 1 - _calculate_diag_MAC_matrix(predicted_eigenvectors[:, i, :], real_eigenvectors[:, i, :])
-        return mac_errors
+        if verbose:
+            if i == 0:
+                print("{}/{} fold is done".format(i+1, n_folds))
+            else:
+                print("{}/{} folds are done".format(i+1, n_folds))
+    return total_frequency_errors, total_mac_errors
     
 def save(model: Mosaic, name: str, path: str):
     with open(path + name + '.msic', 'wb') as handle:
