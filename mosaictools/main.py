@@ -16,7 +16,7 @@ import os
 
 #----------- Clustering -------------#
 
-def _calculate_MAC_matrix(eigenvectors_1 : np.ndarray, eigenvectors_2: np.ndarray) -> np.ndarray:
+def calculate_MAC_matrix(eigenvectors_1 : np.ndarray, eigenvectors_2: np.ndarray) -> np.ndarray:
     ''' Returns the MAC matrix between two arrays of eigenvectors.
     
         Parameters
@@ -140,7 +140,7 @@ def _get_highest_off_diagonal_macs(cluster_centers : np.ndarray) -> np.ndarray:
         highest_off_diagonal_macs : ndarray of shape (n_clusters, )
             Array of the highest off-diagonal MAC values.'''
 
-    automac = _calculate_MAC_matrix(cluster_centers,cluster_centers)
+    automac = calculate_MAC_matrix(cluster_centers,cluster_centers)
     num_of_clusters = cluster_centers.shape[0]
     highest_off_diagonal_macs = [0]
     for i in range(1,num_of_clusters):
@@ -191,7 +191,7 @@ def _find_typical_eigenvectors(eigenvectors : np.ndarray, eigenfrequencies: np.n
     highest_off_diagonal_macs = _get_highest_off_diagonal_macs(cluster_centers)
     ind_clusters_retain = highest_off_diagonal_macs<0.2
     typical_eigenvectors = np.vstack((typical_eigenvectors,cluster_centers[ind_clusters_retain]))
-    mac = _calculate_MAC_matrix(eigenvectors,typical_eigenvectors)
+    mac = calculate_MAC_matrix(eigenvectors,typical_eigenvectors)
     ind_eignevectors_unclustered = np.max(mac,axis=1)<resolution
     if np.sum(ind_eignevectors_unclustered)>0:
         eigenvectors_unclustered = eigenvectors[ind_eignevectors_unclustered]
@@ -210,7 +210,7 @@ def _find_typical_eigenvectors(eigenvectors : np.ndarray, eigenfrequencies: np.n
         typical_eigenvectors = np.vstack((typical_eigenvectors,typical_eigenvectors_remaining))
 
     if recursion_iteration==0 and eigenfrequencies is not None:
-        mac = _calculate_MAC_matrix(typical_eigenvectors,eigenvectors)
+        mac = calculate_MAC_matrix(typical_eigenvectors,eigenvectors)
         mean_eigenfrequencies = []
         for i in range(typical_eigenvectors.shape[0]):
             mask = np.where(np.argmax(mac,axis=0)==i)
@@ -539,10 +539,12 @@ class ModeModel():
                 Training eigenvectors.'''
         
         reference_vectors = _find_typical_eigenvectors(eigenvectors, frequencies, resolution=self.resolution)
-        labels = np.argmax(_calculate_MAC_matrix(reference_vectors, eigenvectors), axis = 0)
+        labels = np.argmax(calculate_MAC_matrix(reference_vectors, eigenvectors), axis = 0)
         self.classifier.fit(params, labels)
 
         eigenvectors = _flip_eigenvectors(eigenvectors, reference_vectors)
+        
+        self.reference_vectors = reference_vectors
 
         classes = self.classifier.get_classes()
         _, self.n_nodes = eigenvectors.shape
@@ -655,6 +657,9 @@ class ModeModel():
         assert len(self.eigenvector_models) != 0, 'The ModeModel is not trained yet'
         model_idx = self.classifier.predict(q)
         return model_idx
+    
+    def get_reference_vectors(self) -> np.ndarray:
+        return self.reference_vectors
 
     def get_labels(self) -> list:
         ''' Return the list of class labels of the trained classifier.
@@ -893,6 +898,14 @@ class Mosaic():
             labels[:, i] = self.mode_models[i].get_classification_results(q)
 
         return labels
+    
+    def get_reference_vectors(self) -> list:
+        assert len(self.mode_models) != 0, 'The MOSAIC model is not trained yet.'
+        reference_vectors = []
+        for i in range(self.n_modes):
+            reference_vectors.append(self.mode_models[i].get_reference_vectors())
+        return reference_vectors
+
 
     def get_number_of_classes(self) -> list:
         ''' Return array of class numbers of the trained classifiers in each mode.
