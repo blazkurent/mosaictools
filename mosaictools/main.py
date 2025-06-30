@@ -907,7 +907,7 @@ class Mosaic():
         return reference_vectors
 
 
-    def get_number_of_classes(self) -> list:
+    def get_number_of_subdomains(self) -> list:
         ''' Return array of class numbers of the trained classifiers in each mode.
             
             Returns
