@@ -2,9 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name='mosaictools',
-    version='0.1.11',
-    author='Blaž Kurent',
-    author_email='blaz.kurent@fgg.uni-lj.si',
+    version='0.2.0',
+    author='Blaž Kurent, Bence Popovics',
+    author_email='blaz.kurent@fgg.uni-lj.si, popbence@hun-ren.sztaki.hu',
     description='Surrogate modelling of modal properties using MOSAIC method',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -12,9 +12,11 @@ setup(
     packages=find_packages(),
     py_modules=['mosaictools'],
     install_requires=[
-        'numpy',
+        'numpy<2.0',
         'scikit-learn',
-        'scipy'
+        'scipy',
+        'uncertain-variables',
+        'gPCE-model'
     ],
     classifiers=[
         'Programming Language :: Python :: 3',

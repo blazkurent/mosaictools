@@ -1,2 +1,5 @@
-__version__ = '0.1.11'
-from .main import *
+__version__ = '0.2.0'
+from .utils import *
+from .SubdomainClassifier import *
+from .ModeModel import *
+from .Mosaic import *
