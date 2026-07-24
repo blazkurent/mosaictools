@@ -1,6 +1,6 @@
 # mosaictools
 
-`mosaictools` is a Python package for surrogate modeling of modal properties using the
+A Python package for surrogate modeling of modal properties using the
 Mode-Shape-Adapted Input parameter domain Cutting (MOSAIC) method.
 
 ## Overview
@@ -35,13 +35,11 @@ pip install mosaictools
 
 A complete demonstration is included in:
 
-- `demo/notebooks/mosaic_example_notebook.ipynb`
+- [https://github.com/blazkurent/mosaictools/blob/main/notebooks/mosaic_package_demonstration.ipynb](https://github.com/blazkurent/mosaictools/blob/main/notebooks/mosaic_package_demonstration.ipynb)
 
 The corresponding example arrays are in:
 
-- `demo/data/parameters.npy`
-- `demo/data/frequencies.npy`
-- `demo/data/eigenvectors.npy`
+- [https://github.com/blazkurent/mosaictools/tree/main/mosaic_example_data](https://github.com/blazkurent/mosaictools/tree/main/mosaic_example_data)
 
 ## License
 
