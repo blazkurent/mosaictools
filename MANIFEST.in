@@ -1,0 +1,2 @@
+recursive-exclude mosaic_example_data *
+recursive-exclude notebooks *
