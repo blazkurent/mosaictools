@@ -9,7 +9,7 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/blazkurent/mosaictools/',
-    packages=find_packages(),
+    packages=find_packages(exclude=["mosaic_example_data", "mosaic_example_data.*", "notebooks", "notebooks.*"]),
     py_modules=['mosaictools'],
     install_requires=[
         'numpy<2.0',
