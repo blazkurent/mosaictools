@@ -5,6 +5,7 @@ from .ModeModel import ModeModel
 from scipy.stats import qmc
 import pickle
 import os
+import pandas as pd
 
 
 class Mosaic():
@@ -12,8 +13,8 @@ class Mosaic():
 
         Attributes
         ----------
-        Q : SimParamSet
-            Description of the parameters.
+        Q : VariableSet
+            Description of the variables.
 
         mode_models : dict
             Dictionaty of ModeModels.
@@ -65,16 +66,13 @@ class Mosaic():
         calculate_eigenvector_MAC_errors(self, real_eigenvectors, predicted_eigenvectors):
             Return array of 1 - MAC values between real eigenvectors and predictions.'''
     
-    def __init__(self, names: list, bounds: list, resolution: float=0.6, max_freq_degree: int=4, max_vect_degree: int=5, classification_method: str='svc', **class_kwargs: dict):
+    def __init__(self, variable_set: VariableSet, resolution: float=0.6, max_freq_degree: int=4, max_vect_degree: int=5, classification_method: str='svc', **class_kwargs: dict):
         ''' Mosaic constructor.
             
             Parameters
             ----------
-            names : list
-                List of the parameter names.
-
-            bounds : list
-                List of tuples of upper and lower bounds of the parameters.
+            variable_set : VariableSet
+                Variable set of the model
             
             resolution : float, default=0.6
                 Resolution of the subdomain segmentation in the parameter space.
@@ -94,11 +92,11 @@ class Mosaic():
         assert classification_method in ['svc', 'custom'], "Method `{}` is not supported for classification. Use `svc` or `custom`.".format(classification_method)
         if classification_method == 'custom':
             assert 'classifier_model' in class_kwargs, "Add a chosen classifier instance for method `custom`."
-        assert len(names)==len(bounds), "The number of names and bounds should be equal."
-        self.Q = VariableSet()
-        for i in range(len(names)):
-            assert len(bounds[i]) == 2, "All bounds should be a tuple with two values."
-            self.Q.add(Variable(names[i], UniformDistribution(bounds[i][0], bounds[i][1])))
+        # assert len(names)==len(bounds), "The number of names and bounds should be equal."
+        self.Q = variable_set
+        # for i in range(len(names)):
+        #     assert len(bounds[i]) == 2, "All bounds should be a tuple with two values."
+        #     self.Q.add(Variable(names[i], UniformDistribution(bounds[i][0], bounds[i][1])))
 
         self.mode_models = {}
         self.resolution=resolution
@@ -111,7 +109,7 @@ class Mosaic():
 
         self.class_kwargs = class_kwargs
 
-    def fit(self, params: np.ndarray, frequencies: np.ndarray, eigenvectors: np.ndarray, verbose: bool=True):
+    def fit(self, params: np.ndarray, frequencies: np.ndarray=None, eigenvectors: np.ndarray=None, QoI: pd.DataFrame=None, verbose: bool=True):
         ''' Fit the Mosaic according to the given training data.
         
             Parameters
@@ -138,7 +136,6 @@ class Mosaic():
         assert frequencies.shape[1] == eigenvectors.shape[1], "The training frequencies and eigenvectors should have the same number of modes."
 
         self.mode_models = {}
-
 
         _, n_modes, n_nodes = eigenvectors.shape
         self.n_modes = n_modes
@@ -206,7 +203,7 @@ class Mosaic():
                 List of the prediction probabilities.'''
         
         assert len(self.mode_models) != 0, 'The MOSAIC model is not trained yet.'
-        q = self.Q.params2germ(q.T).T
+        q = self.Q.variable2germ(q)
         probabilities = []
         for i in range(self.n_modes):
             mode_probabilities = self.mode_models[i].predict_probability(q)
