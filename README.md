@@ -1,7 +1,5 @@
 # mosaictools
 
-[![PyPI - Version](https://img.shields.io/pypi/v/mosaictools?style=flat)](https://pypi.org/project/mosaictools/)
-
 A Python package for surrogate modeling of modal properties using the
 Mode-Shape-Adapted Input parameter domain Cutting (MOSAIC) method.
 
