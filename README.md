@@ -5,6 +5,9 @@
 A Python package for surrogate modeling of modal properties using the
 Mode-Shape-Adapted Input parameter domain Cutting (MOSAIC) method.
 
+- Source code: [https://github.com/blazkurent/mosaictools](https://github.com/blazkurent/mosaictools)
+- Bug reports: [https://github.com/blazkurent/mosaictools/issues](https://github.com/blazkurent/mosaictools/issues)
+
 ## Overview
 
 The package is designed for structural dynamics workflows where mode degeneration effects
