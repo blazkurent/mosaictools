@@ -1,5 +1,6 @@
 # mosaictools
 
+[![DOI](https://img.shields.io/badge/DOI-10.1016%2Fj.ymssp.2025.113381-blue)](https://doi.org/10.1016/j.ymssp.2025.113381)
 [![PyPI - Version](https://img.shields.io/pypi/v/mosaictools?style=flat)](https://pypi.org/project/mosaictools/)
 
 A Python package for surrogate modeling of modal properties using the
@@ -15,7 +16,7 @@ The package is designed for structural dynamics workflows where mode degeneratio
 MOSAIC addresses this by splitting the parameter domain into modal subdomains and fitting
 local generalized Polynomial Chaos Expansion (gPCE) models.
 
-Reference preprint: [MOSAIC method](https://doi.org/10.2139/ssrn.5072693)
+Reference article: [A novel approach to surrogate modelling of modal properties: Mode-shape-adapted input parameter domain cutting](https://www.sciencedirect.com/science/article/pii/S0888327025010829)
 
 ## Installation
 
