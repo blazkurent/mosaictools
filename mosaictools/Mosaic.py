@@ -155,7 +155,7 @@ class Mosaic():
             if verbose:
                 print('Mode {} is trained'.format(i+1))
 
-    def predict(self, q : np.ndarray, reorder : bool=False) -> tuple:
+    def predict(self, q : np.ndarray, reorder : bool=False, flatten : bool=True) -> tuple:
         ''' Perform prediction of the frequencies and eigenvectors on parameter samples `q`.
 
             Parameters
@@ -176,6 +176,9 @@ class Mosaic():
         
         assert len(self.mode_models) != 0, 'The MOSAIC model is not trained yet'
         
+        if type(q) == pd.DataFrame:
+            q = q.values
+
         q = self.Q.variable2germ(q)
 
         frequencies = np.zeros((len(q), self.n_modes))
@@ -187,6 +190,22 @@ class Mosaic():
             for j in range(len(q)):
                 frequencies[j, :] = frequencies[j, :][order[j, :]]
                 eigenvectors[j, :, :] = eigenvectors[j, :, :][order[j, :]]
+
+        if flatten:
+            columns = ['f.{}'.format(i+1) for i in range(self.n_modes)]
+            for i in range(self.n_modes):
+                for j in range(self.n_nodes):
+                    columns.append('S.{}.{}'.format(i+1, j+1))
+            output = np.zeros((len(q), self.n_modes + self.n_modes*self.n_nodes))
+            output[:, :self.n_modes] = frequencies
+            for i in range(len(q)):
+                output[i, self.n_modes:] = eigenvectors[i, :, :].reshape(1, -1)
+            # frequencies = frequencies.reshape(len(q), self.n_modes, 1)
+
+            # eigenvectors = eigenvectors.reshape(len(q), self.n_modes, self.n_nodes)
+            return output
+            # return pd.DataFrame(output, columns=columns).values
+
         return frequencies, eigenvectors
 
     def predict_probability(self, q: np.ndarray) -> list:
