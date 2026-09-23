@@ -23,13 +23,16 @@ def plot_space_division(model, mode, n_samples=10000):
         g : seaborn PairGrid object
             A seaborn PairGrid object showing the division of the parametric space for the given mode"""
 
-    variables = model.sample(n_samples)
+    if model.n_demo_samples is None or model.n_demo_samples != n_samples:
+        model.demo_variables = model.sample(n_samples)
+        model.demo_labels = model.get_class_labels(model.demo_variables)
+        model.n_demo_samples = n_samples
     
-    labels = model.get_class_labels(variables)
-    n_clusters = len(np.unique(labels[:, mode-1]))
+    # labels = model.get_class_labels(model.demo_variables)
+    n_clusters = len(np.unique(model.demo_labels[:, mode-1]))
 
-    x_data = pd.DataFrame(variables, columns=model.Q.variable_names())
-    x_data.insert(3, "label", labels[:, mode-1], True)
+    x_data = pd.DataFrame(model.demo_variables, columns=model.Q.variable_names())
+    x_data.insert(3, "label", model.demo_labels[:, mode-1], True)
     x_data["label"] = x_data["label"].astype(int)
 
     palette=sns.color_palette("Paired", n_clusters)

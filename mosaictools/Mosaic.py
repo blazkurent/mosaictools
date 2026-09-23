@@ -107,6 +107,10 @@ class Mosaic():
         self.n_modes = None
         self.n_nodes = None
 
+        self.demo_variables = None
+        self.demo_labels = None
+        self.n_demo_samples = None
+
         self.class_kwargs = class_kwargs
 
     def fit(self, params: np.ndarray, frequencies: np.ndarray=None, eigenvectors: np.ndarray=None, QoI: pd.DataFrame=None, verbose: bool=True):
