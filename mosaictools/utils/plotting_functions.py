@@ -4,29 +4,31 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from .clustering import calculate_MAC_matrix
 
-def get_space_division(model, parameters, mode):
-    """ Return a seaborn PairGrid object showing the division of the parametric space for a given mode.
+def plot_space_division(model, mode, n_samples=10000):
+    """ Return a seaborn PairGrid object showing the division of the variables space for a given mode.
     
         Parameters
         ----------
         model : Mosaic
             A Mosaic model object.
-            
-        parameters : np.ndarray of shape (n_samples, n_parameters)
-            Array of parameters used for the classification.
-            
+                        
         mode : int
             The mode for which the parametric space division is to be visualized.
+
+        n_samples : int
+            The number of variable samples to draw from the model for visualization.
             
         Returns
         -------
         g : seaborn PairGrid object
             A seaborn PairGrid object showing the division of the parametric space for the given mode"""
+
+    variables = model.sample(n_samples)
     
-    labels = model.get_class_labels(parameters)
+    labels = model.get_class_labels(variables)
     n_clusters = len(np.unique(labels[:, mode-1]))
 
-    x_data = pd.DataFrame(parameters, columns=model.Q.variable_names())
+    x_data = pd.DataFrame(variables, columns=model.Q.variable_names())
     x_data.insert(3, "label", labels[:, mode-1], True)
     x_data["label"] = x_data["label"].astype(int)
 
@@ -36,21 +38,18 @@ def get_space_division(model, parameters, mode):
     g.map_offdiag(sns.scatterplot)
     g.add_legend()
     g.fig.subplots_adjust(top=0.9)
-    g.fig.suptitle("Parametric space division in mode {}".format(mode))
+    g.fig.suptitle("Variable space division in mode {}".format(mode))
 
     return g
 
-def get_reference_eigenvectors(model, parameters, mode):
+def plot_reference_eigenvectors(model, mode):
     """ Return a matplotlib figure showing the reference eigenvectors for a given mode.
     
         Parameters
         ----------
         model : Mosaic
             A Mosaic model object.
-            
-        parameters : np.ndarray of shape (n_samples, n_parameters)
-            Array of parameters used for the classification.
-            
+                        
         mode : int
             The mode for which the reference eigenvectors are to be visualized.
             
@@ -59,14 +58,14 @@ def get_reference_eigenvectors(model, parameters, mode):
         fig : matplotlib.figure.Figure
             A matplotlib figure showing the reference eigenvectors for the given mode"""
     
-    labels = model.get_class_labels(parameters)
-    n_clusters = len(np.unique(labels[:, mode-1]))
+    reference_eigenvectors = model.get_reference_vectors()[mode-1]
+
+    n_clusters = len(reference_eigenvectors)
 
     palette=sns.color_palette("Paired", n_clusters)
 
     colors = iter(palette)
 
-    reference_eigenvectors = model.get_reference_vectors()[mode-1]
 
     fig, ax = plt.subplots(n_clusters)
     if n_clusters == 1:
@@ -86,17 +85,14 @@ def get_reference_eigenvectors(model, parameters, mode):
         fig.legend()
     return fig
 
-def get_reference_correlation_matrix(model, parameters, mode):
+def plot_reference_correlation_matrix(model, mode):
     """ Return a matplotlib figure showing the correlation matrix of the reference eigenvectors for a given mode.
     
         Parameters
         ----------
         model : Mosaic
             A Mosaic model object.
-            
-        parameters : np.ndarray of shape (n_samples, n_parameters)
-            Array of parameters used for the classification.
-            
+                        
         mode : int
             The mode for which the correlation matrix of the reference eigenvectors is to be visualized.
             
@@ -105,10 +101,10 @@ def get_reference_correlation_matrix(model, parameters, mode):
         fig : matplotlib.figure.Figure
             A matplotlib figure showing the correlation matrix of the reference eigenvectors for the given mode"""
     
-    labels = model.get_class_labels(parameters)
-    n_clusters = len(np.unique(labels[:, mode-1]))
-
     reference_eigenvectors = model.get_reference_vectors()[mode-1]
+
+    n_clusters = len(reference_eigenvectors)
+
     
     mac_matrix = calculate_MAC_matrix(reference_eigenvectors, reference_eigenvectors)
 

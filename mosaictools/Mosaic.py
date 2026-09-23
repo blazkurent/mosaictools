@@ -273,7 +273,7 @@ class Mosaic():
         return classes
     
     def sample(self, n_samples : int) -> np.ndarray:
-        ''' Return array of sampled parameters using Halton.
+        ''' Return array of sampled variables using Halton.
 
             Parameters
             ----------
@@ -282,7 +282,7 @@ class Mosaic():
             
             Returns
             -------
-            parameters : ndarray of shape (n_samples, n_parameters)
+            variables : ndarray of shape (n_samples, n_parameters)
                 Array of sampled parameter values.'''
         
         n_params = self.Q.num_variables()
@@ -290,9 +290,9 @@ class Mosaic():
         sample = sampler.random(n=n_samples)
         l_bounds = [-1] * n_params
         u_bounds = [1] * n_params
-        parameters = qmc.scale(sample, l_bounds, u_bounds)
-        parameters = self.Q.germ2variable(parameters)
-        return parameters
+        variables = qmc.scale(sample, l_bounds, u_bounds)
+        variables = self.Q.germ2variable(variables)
+        return variables
 
     def save_model(self, name=None, path=None):
             '''
