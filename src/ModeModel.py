@@ -133,15 +133,16 @@ class ModeModel():
                     break
                 vector_model = GpcModel(self.Q, j)
             
-            vector_cluster = eigenvectors[data_indexes, :]
+            q_cluster = self.Q.germ2variable(params[data_indexes])   # back to physical space for GpcModel
 
-            vector_model.compute_coeffs_by_regression(params[data_indexes], vector_cluster)
+            vector_cluster = eigenvectors[data_indexes, :]
+            vector_model.compute_coeffs_by_regression(q_cluster, vector_cluster)
             self.eigenvector_models[classes[i]] = vector_model
 
             frequency_cluster = frequencies[data_indexes]
-            
-            frequency_model.compute_coeffs_by_regression(params[data_indexes], frequency_cluster)
+            frequency_model.compute_coeffs_by_regression(q_cluster, frequency_cluster)
             self.frequency_models[classes[i]] = frequency_model
+
 
     def predict(self, q : np.ndarray) -> tuple:
         ''' Perform prediction of the frequencies and eigenvectors on parameter samples `q`.
@@ -166,7 +167,7 @@ class ModeModel():
         u = np.unique(model_idx)
         for i in range(len(u)):
             indexes = np.where(model_idx == u[i])[0]
-            q_i = q[indexes]
+            q_i = self.Q.germ2variable(q[indexes])
             frequencies[indexes] = self.frequency_models[u[i]].predict(q_i)
             eigenvectors[indexes, :] = self.eigenvector_models[u[i]].predict(q_i)
         return frequencies, eigenvectors
