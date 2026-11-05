@@ -24,6 +24,30 @@ from matplotlib.colors import ListedColormap, BoundaryNorm
 # ----------------------------------------------------------------------------- helpers
 
 def _setup(model, mode, germ_bounds, delta):
+    """Set up the necessary components for plotting functions.
+
+        Parameters
+        ----------
+        model : Mosaic
+            The trained Mosaic model.
+        mode : int
+            Mode index for which to set up the plotting.
+        germ_bounds : ndarray or None
+            Bounds in the germ space. If None, they will be computed from the physical bounds.
+        delta : float
+            Small perturbation used to compute the physical bounds if `germ_bounds` is None.
+
+        Returns
+        -------
+        Q : object
+            The Q object from the model.
+        classes : ndarray
+            Array of class labels.
+        germ_bounds : ndarray
+            Array of germ space bounds.
+        predict_idx : function
+            Function to predict class indices for given samples.
+    """
     Q = model.Q
     clf = model.mode_models[mode - 1].classifier
     if germ_bounds is None:
@@ -42,7 +66,24 @@ def _setup(model, mode, germ_bounds, delta):
 
 
 def _panel_points(xi_fixed, dims, axes_1d):
-    """Grid points (germ space) varying `dims`, all other variables at `xi_fixed`."""
+    """ Grid points (germ space) varying `dims`, all other variables at `xi_fixed`.
+        
+        Parameters
+        ----------
+        xi_fixed : ndarray
+            Fixed values for all variables not in `dims`.
+        dims : list of int
+            Indices of the dimensions to vary.
+        axes_1d : list of ndarrays
+            1D arrays representing the grid points for each dimension.
+
+        Returns
+        -------
+        pts : ndarray
+            Array of grid points with shape (n_points, n_parameters).
+        shape : tuple
+            Shape of the grid for the varying dimensions.
+        """
     grids = np.meshgrid(*[axes_1d[d] for d in dims[::-1]])[::-1]   # first dim -> columns
     pts = np.tile(xi_fixed, (grids[0].size, 1))
     for d, g in zip(dims, grids):
@@ -53,14 +94,47 @@ def _panel_points(xi_fixed, dims, axes_1d):
 # ----------------------------------------------------------------------------- slice search
 
 def _visibility(idx, n_cls, min_frac):
-    """idx: (n_slices, n_points) class indices -> (counts, fracs)."""
+    """ Compute visibility of classes in slices.
+
+        Parameters
+        ----------
+        idx : ndarray of shape (n_slices, n_points)
+            Class indices for each point in each slice.
+        n_cls : int
+            Number of classes.
+        min_frac : float
+            Minimum fraction of points required for a class to be considered visible.
+
+        Returns
+        -------
+        counts : ndarray of shape (n_slices,)
+            Number of visible classes in each slice.
+        frac : ndarray of shape (n_slices, n_cls)
+            Fraction of points belonging to each class in each slice.
+    """
     frac = np.stack([(idx == k).mean(axis=1) for k in range(n_cls)], axis=1)
     return (frac >= min_frac).sum(axis=1), frac
 
 
 def _score(counts, frac, hc, min_frac):
-    """Lexicographic score: visible classes, then the smallest visible area
-    (bigger = easier to see), then closeness to the median."""
+    """ Compute a score for candidate slices based on visibility and distance.
+
+        Parameters
+        ----------
+        counts : ndarray of shape (n_slices,)
+            Number of visible classes in each slice.
+        frac : ndarray of shape (n_slices, n_cls)
+            Fraction of points belonging to each class in each slice.
+        hc : ndarray of shape (n_slices, n_hidden)
+            Hidden variable coordinates of the slices.
+        min_frac : float
+            Minimum fraction of points required for a class to be considered visible.
+
+        Returns
+        -------
+        score : ndarray of shape (n_slices,)
+            Computed score for each slice.
+    """
     vis_min = np.where(frac >= min_frac, frac, np.inf).min(axis=1)
     vis_min[~np.isfinite(vis_min)] = 0
     dist = np.linalg.norm(hc, axis=1)
@@ -70,28 +144,61 @@ def _score(counts, frac, hc, min_frac):
 def find_slices(model, mode, train_params=None, n_global=20000, n_cand=5000, k_neighbors=100,
                 n_verify=64, n_design=32, refine_steps=30, n_grid=30, min_frac=0.003, germ_bounds=None, delta=1e-3,
                 seed=0, verbose=False):
-    """For every panel of the pairplot, find hidden-variable values at which as many
+    """ For every panel of the pairplot, find hidden-variable values at which as many
     classes as possible are visible.
 
-    Idea: class k is visible in the panel at hidden values h exactly when h lies in the
-    projection of region k onto the hidden variables. So the best slice is where the
-    most projections overlap.
-      1. Classify one dense Halton sample of the whole space (plus training points),
-         once for all panels.
-      2. Per panel, estimate the panel composition at n_cand candidate hidden values
-         from the labels of their k_neighbors nearest samples in the hidden variables
-         (KD-tree, no classifier calls).
-      3. Verify the best n_verify candidates (plus a small space-filling design) exactly
-         on a coarse grid, then refine the
-         winner with a short local search if it falls short of the estimate.
+        Idea: class k is visible in the panel at hidden values h exactly when h lies in the
+        projection of region k onto the hidden variables. So the best slice is where the
+        most projections overlap.
+        1. Classify one dense Halton sample of the whole space (plus training points),
+            once for all panels.
+        2. Per panel, estimate the panel composition at n_cand candidate hidden values
+            from the labels of their k_neighbors nearest samples in the hidden variables
+            (KD-tree, no classifier calls).
+        3. Verify the best n_verify candidates (plus a small space-filling design) exactly
+            on a coarse grid, then refine the
+            winner with a short local search if it falls short of the estimate.
 
-    Ties are broken by the smallest visible area (larger is easier to see) and then by
-    closeness to the median.
+        Ties are broken by the smallest visible area (larger is easier to see) and then by
+        closeness to the median.
 
-    Returns
-    -------
-    slices : dict {(i, j): xi_fixed (germ space)}, i <= j
-    counts : dict {(i, j): number of visible classes}
+        Parameters
+        ----------
+        model : object
+            The model used for predictions.
+        mode : str
+            Mode of operation for the model.
+        train_params : array-like, optional
+            Training parameters to include in the Halton sample.
+        n_global : int, optional
+            Number of global Halton samples.
+        n_cand : int, optional
+            Number of candidate hidden values to consider.
+        k_neighbors : int, optional
+            Number of nearest neighbors to use for estimating panel composition.
+        n_verify : int, optional
+            Number of candidates to verify on the coarse grid.
+        n_design : int, optional
+            Number of points in the space-filling design.
+        refine_steps : int, optional
+            Number of steps for local refinement.
+        n_grid : int, optional
+            Number of points in the coarse grid.
+        min_frac : float, optional
+            Minimum fraction of points required for a class to be considered visible.
+        germ_bounds : array-like, optional
+            Bounds for the germ space.
+        delta : float, optional
+            Small perturbation for numerical stability.
+        seed : int, optional
+            Random seed for reproducibility.
+        verbose : bool, optional
+            If True, print progress information.
+
+        Returns
+        -------
+            slices : dict {(i, j): xi_fixed (germ space)}, i <= j
+            counts : dict {(i, j): number of visible classes}
     """
     from scipy.spatial import cKDTree
 
@@ -176,6 +283,22 @@ def find_slices(model, mode, train_params=None, n_global=20000, n_cand=5000, k_n
 
 
 def _with(hidden, values, m):
+    """Construct a full parameter vector from hidden values.
+
+        Parameters
+        ----------
+        hidden : array_like
+            Indices of the hidden variables.
+        values : array_like
+            Values for the hidden variables.
+        m : int
+            Total number of parameters.
+
+        Returns
+        -------
+        xi : ndarray
+            Full parameter vector with hidden values inserted.
+    """
     xi = np.zeros(m)
     xi[hidden] = values
     return xi
@@ -186,26 +309,26 @@ def _with(hidden, values, m):
 def plot_classification_regions(model, mode, slices="auto", n_grid=200, fixed=None,
                                 germ_bounds=None, delta=1e-3, train_params=None,
                                 figsize=None, annotate=True, **search_kwargs):
-    """Pairplot of the subdomain classifier's regions for one mode, using 2D slices.
+    """ Pairplot of the subdomain classifier's regions for one mode, using 2D slices.
 
-    Parameters
-    ----------
-    model : Mosaic
-        A trained Mosaic model.
-    mode : int
-        1-based mode index.
-    slices : {"auto", "median"} or dict
-        "auto": per panel, search hidden-variable values that show as many classes as
-        possible (see find_slices). "median": all hidden variables at their median, or
-        at `fixed` if given. A dict as returned by find_slices is also accepted.
-    fixed : array_like (n_params,), optional
-        Physical values for hidden variables when slices="median".
-    train_params : ndarray (n_samples, n_params), optional
-        Training parameters in physical units to overlay.
-    annotate : bool
-        Write the hidden-variable values of each panel into the panel.
-    **search_kwargs
-        Passed to find_slices (n_candidates, n_grid, min_frac, seed).
+        Parameters
+        ----------
+        model : Mosaic
+            A trained Mosaic model.
+        mode : int
+            1-based mode index.
+        slices : {"auto", "median"} or dict
+            "auto": per panel, search hidden-variable values that show as many classes as
+            possible (see find_slices). "median": all hidden variables at their median, or
+            at `fixed` if given. A dict as returned by find_slices is also accepted.
+        fixed : array_like (n_params,), optional
+            Physical values for hidden variables when slices="median".
+        train_params : ndarray (n_samples, n_params), optional
+            Training parameters in physical units to overlay.
+        annotate : bool
+            Write the hidden-variable values of each panel into the panel.
+        **search_kwargs
+            Passed to find_slices (n_candidates, n_grid, min_frac, seed).
     """
     Q, classes, gb, predict_idx = _setup(model, mode, germ_bounds, delta)
     names, m, n_cls = Q.variable_names(), Q.num_variables(), len(classes)

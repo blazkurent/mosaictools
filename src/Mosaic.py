@@ -131,7 +131,7 @@ class Mosaic():
                 If true, the function prints the training progress.'''
         
         assert len(params.shape) == 2, "The dimensions of train parameter values should be [n_datapoints, n_params]."
-        assert params.shape[1] == self.Q.num_variables(), "The model constructed with {} parameters, but {} was given for the training. Change the model or the training settings.".format(self.Q.num_params(), params.shape[1])
+        assert params.shape[1] == self.Q.num_variables(), "The model constructed with {} parameters, but {} was given for the training. Change the model or the training settings.".format(self.Q.num_variables(), params.shape[1])
 
         assert len(frequencies.shape) == 2, "The dimensions of training eigenfrequencies should be [n_datapoints, n_modes]."
         assert len(eigenvectors.shape) == 3, "The dimensions of training eigenvectors should be [n_datapoint, n_modes, n_nodes]."
@@ -255,6 +255,13 @@ class Mosaic():
         return labels
     
     def get_reference_vectors(self) -> list:
+        """ Returns the reference vectors of the trained mode models.
+
+            Returns
+            -------
+            reference_vectors : list of ndarrays
+                List containing the reference vectors for each mode.
+        """
         assert len(self.mode_models) != 0, 'The MOSAIC model is not trained yet.'
         reference_vectors = []
         for i in range(self.n_modes):
@@ -326,6 +333,18 @@ class Mosaic():
                 return pickle.dumps(self)
 
 def load_model(path: str) -> Mosaic:
+    """ Loads a previously saved MOSAIC model from a file.
+
+        Parameters
+        ----------
+        path : str
+            Path to the saved model file with '.msic' extension.
+
+        Returns
+        -------
+        model : Mosaic
+            The loaded MOSAIC model.
+    """
     assert os.path.isfile(path), "File does not exist"
     assert path[-5:] == ".msic", "File extention is not correct. Select a '.msic' file"
     with open(path, 'rb') as handle:

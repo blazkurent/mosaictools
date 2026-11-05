@@ -224,6 +224,13 @@ class ModeModel():
         return model_idx
     
     def get_reference_vectors(self) -> np.ndarray:
+        """ Returns the reference vectors of the trained mode model.
+
+            Returns
+            -------
+            reference_vectors : ndarray
+                Array containing the reference vectors for the mode model.
+        """
         return self.reference_vectors
 
     def get_labels(self) -> list:

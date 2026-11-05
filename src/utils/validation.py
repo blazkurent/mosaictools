@@ -67,6 +67,32 @@ def calculate_eigenvector_MAC_errors(real_eigenvectors : np.ndarray, predicted_e
     return mac_errors
 
 def cross_validate(model: Mosaic, parameters: np.ndarray, frequencies: np.ndarray, eigenvectors: np.ndarray, n_folds: int = 9, shuffle: bool = False, verbose=False):
+    """ Performs cross-validation on the provided model using the given data.
+
+        Parameters
+        ----------
+        model : Mosaic
+            The Mosaic model to be cross-validated.
+        parameters : ndarray of shape (n_samples, n_features)
+            Input parameters for the model.
+        frequencies : ndarray of shape (n_samples, n_modes)
+            Frequency data corresponding to the input parameters.
+        eigenvectors : ndarray of shape (n_samples, n_modes, n_nodes)
+            Eigenvector data corresponding to the input parameters.
+        n_folds : int, optional
+            Number of folds for cross-validation. Default is 9.
+        shuffle : bool, optional
+            Whether to shuffle the data before splitting into folds. Default is False.
+        verbose : bool, optional
+            If True, prints progress information during cross-validation. Default is False.
+
+        Returns
+        -------
+        total_frequency_errors : ndarray of shape (n_samples, n_modes)
+            Concatenated relative frequency errors across all folds.
+        total_mac_errors : ndarray of shape (n_samples, n_modes)
+            Concatenated 1 - MAC errors across all folds.
+    """
 
     kf = KFold(n_splits=n_folds, shuffle=shuffle)
 
@@ -100,3 +126,29 @@ def cross_validate(model: Mosaic, parameters: np.ndarray, frequencies: np.ndarra
             else:
                 print("{}/{} folds are done".format(i+1, n_folds))
     return total_frequency_errors, total_mac_errors
+
+def validation(model: Mosaic, test_parameters: np.ndarray, test_frequencies: np.ndarray, test_eigenvectors: np.ndarray):
+    """ Validates the model on the provided test data and computes frequency and MAC errors.
+
+        Parameters
+        ----------
+        model : Mosaic
+            The trained Mosaic model.
+        test_parameters : ndarray of shape (n_samples, n_features)
+            Test input parameters.
+        test_frequencies : ndarray of shape (n_samples, n_modes)
+            Test frequency data.
+        test_eigenvectors : ndarray of shape (n_samples, n_modes, n_nodes)
+            Test eigenvector data.
+
+        Returns
+        -------
+        frequency_errors : ndarray of shape (n_samples, n_modes)
+            Relative frequency errors between test and predicted frequencies.
+        mac_errors : ndarray of shape (n_samples, n_modes)
+            1 - MAC values between test and predicted eigenvectors.
+    """
+    predicted_frequencies, predicted_eigenvectors = model.predict(test_parameters)
+    frequency_errors = calculate_relative_frequency_errors(test_frequencies, predicted_frequencies)
+    mac_errors = calculate_eigenvector_MAC_errors(test_eigenvectors, predicted_eigenvectors)
+    return frequency_errors, mac_errors
