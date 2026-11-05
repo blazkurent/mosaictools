@@ -351,7 +351,7 @@ class Mosaic():
             mac_errors : ndarray of shape (n_samples, n_modes)
                 1 - MAC values between test and predicted eigenvectors.
         """
-        predicted_frequencies, predicted_eigenvectors = self.predict(test_parameters)
+        predicted_frequencies, predicted_eigenvectors = self.predict(test_parameters, flatten=False)
         frequency_errors = calculate_relative_frequency_errors(test_frequencies, predicted_frequencies)
         mac_errors = calculate_eigenvector_MAC_errors(test_eigenvectors, predicted_eigenvectors)
         return frequency_errors, mac_errors
