@@ -1,6 +1,6 @@
 from uncertain_variables import VariableSet
 import numpy as np
-from .utils import normalize_eigenvectors, validate
+from .utils import normalize_eigenvectors, calculate_relative_frequency_errors, calculate_eigenvector_MAC_errors
 from .ModeModel import ModeModel
 from scipy.stats import qmc
 import pickle
@@ -333,7 +333,7 @@ class Mosaic():
                 return pickle.dumps(self)
 
     def validate(self, test_parameters: np.ndarray, test_frequencies: np.ndarray, test_eigenvectors: np.ndarray):
-        ''' Validates the MOSAIC model using the provided test data.
+        """ Validates the model on the provided test data and computes frequency and MAC errors.
 
             Parameters
             ----------
@@ -346,14 +346,16 @@ class Mosaic():
 
             Returns
             -------
-            frequency_errors : array-like
-                Frequency errors.
-            mac_errors : array-like
-                MAC errors.
-        '''
-        frequency_errors, mac_errors = validate(self, test_parameters, test_frequencies, test_eigenvectors)
+            frequency_errors : ndarray of shape (n_samples, n_modes)
+                Relative frequency errors between test and predicted frequencies.
+            mac_errors : ndarray of shape (n_samples, n_modes)
+                1 - MAC values between test and predicted eigenvectors.
+        """
+        predicted_frequencies, predicted_eigenvectors = self.predict(test_parameters)
+        frequency_errors = calculate_relative_frequency_errors(test_frequencies, predicted_frequencies)
+        mac_errors = calculate_eigenvector_MAC_errors(test_eigenvectors, predicted_eigenvectors)
         return frequency_errors, mac_errors
-
+    
 def load_model(path: str) -> Mosaic:
     """ Loads a previously saved MOSAIC model from a file.
 

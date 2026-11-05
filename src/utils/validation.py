@@ -126,29 +126,3 @@ def cross_validate(model: Mosaic, parameters: np.ndarray, frequencies: np.ndarra
             else:
                 print("{}/{} folds are done".format(i+1, n_folds))
     return total_frequency_errors, total_mac_errors
-
-def validate(model: Mosaic, test_parameters: np.ndarray, test_frequencies: np.ndarray, test_eigenvectors: np.ndarray):
-    """ Validates the model on the provided test data and computes frequency and MAC errors.
-
-        Parameters
-        ----------
-        model : Mosaic
-            The trained Mosaic model.
-        test_parameters : ndarray of shape (n_samples, n_features)
-            Test input parameters.
-        test_frequencies : ndarray of shape (n_samples, n_modes)
-            Test frequency data.
-        test_eigenvectors : ndarray of shape (n_samples, n_modes, n_nodes)
-            Test eigenvector data.
-
-        Returns
-        -------
-        frequency_errors : ndarray of shape (n_samples, n_modes)
-            Relative frequency errors between test and predicted frequencies.
-        mac_errors : ndarray of shape (n_samples, n_modes)
-            1 - MAC values between test and predicted eigenvectors.
-    """
-    predicted_frequencies, predicted_eigenvectors = model.predict(test_parameters)
-    frequency_errors = calculate_relative_frequency_errors(test_frequencies, predicted_frequencies)
-    mac_errors = calculate_eigenvector_MAC_errors(test_eigenvectors, predicted_eigenvectors)
-    return frequency_errors, mac_errors
