@@ -127,7 +127,7 @@ def cross_validate(model: Mosaic, parameters: np.ndarray, frequencies: np.ndarra
                 print("{}/{} folds are done".format(i+1, n_folds))
     return total_frequency_errors, total_mac_errors
 
-def validation(model: Mosaic, test_parameters: np.ndarray, test_frequencies: np.ndarray, test_eigenvectors: np.ndarray):
+def validate(model: Mosaic, test_parameters: np.ndarray, test_frequencies: np.ndarray, test_eigenvectors: np.ndarray):
     """ Validates the model on the provided test data and computes frequency and MAC errors.
 
         Parameters

@@ -1,6 +1,6 @@
-from uncertain_variables import VariableSet, Variable, UniformDistribution
+from uncertain_variables import VariableSet
 import numpy as np
-from .utils import normalize_eigenvectors
+from .utils import normalize_eigenvectors, validate
 from .ModeModel import ModeModel
 from scipy.stats import qmc
 import pickle
@@ -331,6 +331,28 @@ class Mosaic():
                 print(f"Model saved to {name}")
             else:
                 return pickle.dumps(self)
+
+    def validate(self, test_parameters: np.ndarray, test_frequencies: np.ndarray, test_eigenvectors: np.ndarray):
+        ''' Validates the MOSAIC model using the provided test data.
+
+            Parameters
+            ----------
+            test_parameters : ndarray of shape (n_samples, n_features)
+                Test input parameters.
+            test_frequencies : ndarray of shape (n_samples, n_modes)
+                Test frequency data.
+            test_eigenvectors : ndarray of shape (n_samples, n_modes, n_nodes)
+                Test eigenvector data.
+
+            Returns
+            -------
+            frequency_errors : array-like
+                Frequency errors.
+            mac_errors : array-like
+                MAC errors.
+        '''
+        frequency_errors, mac_errors = validate(self, test_parameters, test_frequencies, test_eigenvectors)
+        return frequency_errors, mac_errors
 
 def load_model(path: str) -> Mosaic:
     """ Loads a previously saved MOSAIC model from a file.
