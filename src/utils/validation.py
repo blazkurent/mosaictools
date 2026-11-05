@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.model_selection import KFold
-from ..Mosaic import Mosaic
 
 def _calculate_diag_MAC_matrix(eigenvectors_1 : np.ndarray, eigenvectors_2 : np.ndarray) -> np.ndarray:
     ''' Compute the diagonal terms of the MAC matrix.
@@ -66,7 +65,7 @@ def calculate_eigenvector_MAC_errors(real_eigenvectors : np.ndarray, predicted_e
         mac_errors[:, i] = 1 - _calculate_diag_MAC_matrix(predicted_eigenvectors[:, i, :], real_eigenvectors[:, i, :])
     return mac_errors
 
-def cross_validate(model: Mosaic, parameters: np.ndarray, frequencies: np.ndarray, eigenvectors: np.ndarray, n_folds: int = 9, shuffle: bool = False, verbose=False):
+def cross_validate(model, parameters: np.ndarray, frequencies: np.ndarray, eigenvectors: np.ndarray, n_folds: int = 9, shuffle: bool = False, verbose=False):
     """ Performs cross-validation on the provided model using the given data.
 
         Parameters
